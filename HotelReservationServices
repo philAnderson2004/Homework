@@ -1,0 +1,309 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace HotelReservationSystem
+{
+    public class HotelReservation
+    {
+        private List<Room> rooms;
+        private List<Guest> guests;
+        private List<Reservation> reservations;
+        private SendGridEmailServices emailService = null;
+        private int lastReservationID;
+
+        public HotelReservation(bool sendEmailToSendGrid)
+        {
+            populateSystem(sendEmailToSendGrid);
+        }
+
+                
+        private void populateSystem(bool sendEmailToSendGrid) 
+        {            
+            int numberOfBeds = 1;
+            rooms = new List<Room>();
+            guests = new List<Guest>();
+            reservations = new List<Reservation>();
+
+            if(sendEmailToSendGrid)
+                emailService = new SendGridEmailServices();
+
+            //normally would get the info from a database, but for test purpose need to populate data
+            //Five 1 Bedroom rooms;
+            for (int i = 0; i < 5; i++)
+            {
+                rooms.Add(new Room(i, numberOfBeds, 100.0));
+            }
+
+            //Five 2 Bedroom rooms;
+            numberOfBeds = 2;
+            for (int i = 5; i < 10; i++)
+            {
+                rooms.Add(new Room(i, numberOfBeds, 150.0));
+            }
+            lastReservationID = 0;
+        }
+
+
+        public void MakeReservation()
+        {
+            Guest currentGuest     = GetCurrentGuest(true);
+            int numberOfBeds       = GetNumberOfBeds();
+            DateTime checkInDate   = GetCheckInDate();
+            DateTime checkOutDate  = GetCheckOutDate(checkInDate);
+                  
+            List<Room> availableRooms = AvailableRooms(numberOfBeds, checkInDate, checkOutDate);
+
+            if (availableRooms.Count == 0)
+            {
+                Console.WriteLine("\nSorry no available {0} bedroom during that requested time", numberOfBeds);
+                return;
+            }
+
+            DisplayAvailableRooms(availableRooms);
+            Room selectedRoom = GetSelectedRoom(availableRooms);         
+
+            Reservation newReservation = new Reservation(lastReservationID++, currentGuest, selectedRoom, checkInDate, checkOutDate);
+            reservations.Add(newReservation);
+
+            if(emailService != null)
+                emailService.SendEmail(true, newReservation);
+            Console.WriteLine("\nCongratualtions {0}, your reservation is done.", currentGuest.FirstName);            
+        }
+
+
+        private Room GetSelectedRoom(List<Room> availableRooms)
+        {
+            int requestedRoomID;            
+            bool selectedValidRoom = false;
+            Room selectedRoom = null;
+
+            while (!selectedValidRoom)
+            {
+                Console.WriteLine("\nPlease enter a valid room id number");
+                Int32.TryParse(Console.ReadLine(), out requestedRoomID);
+
+                foreach (Room room in availableRooms)
+                {
+                    if (room.RoomID == requestedRoomID)
+                    {
+                        selectedRoom = room;
+                        selectedValidRoom = true;
+                        break;
+                    }
+                }                
+            }
+            return selectedRoom;
+        }
+
+
+        private DateTime GetCheckOutDate(DateTime checkInDate)
+        {           
+            Console.WriteLine("\nPlease Enter the check out Date (yyyy-mm-dd)");
+            DateTime checkOutDate;
+            //check out date needs to be after check in date and a valid date
+            while (!DateTime.TryParse(Console.ReadLine(), out checkOutDate) || DateTime.Compare(checkInDate, checkOutDate) > 0)
+            {
+                Console.WriteLine("\nPlease enter a valid check out Date (yyyy-mm-dd)");
+            }
+            return checkOutDate;
+        }
+
+
+        private DateTime GetCheckInDate()
+        {            
+            Console.WriteLine("\nPlease Enter the check in Date (yyyy-mm-dd)");
+            DateTime checkInDate;
+            //check in date needs to be after today and a valid date
+            while (!DateTime.TryParse(Console.ReadLine(), out checkInDate) || DateTime.Compare(DateTime.Now, checkInDate) > 0)
+            {
+                Console.WriteLine("\nPlease enter a vaild check in Date (yyyy-mm-dd");
+            }
+            return checkInDate;
+        }
+
+
+        private int GetNumberOfBeds()
+        {            
+            Console.WriteLine("\nPlease Enter the Number of Beds Needed (only one bedroom and two bedrooms available)");
+            int numberOfBeds;
+            Int32.TryParse(Console.ReadLine(), out numberOfBeds);
+
+            while (numberOfBeds != 1 && numberOfBeds != 2)
+            {
+                Console.WriteLine("\nPlease enter a valid room number");
+                Int32.TryParse(Console.ReadLine(), out numberOfBeds);
+            }
+            return numberOfBeds;
+        }
+
+
+        private Guest GetCurrentGuest(bool createGuestIfNotInSystem)
+        {
+            string fname, lname, emailAddress;
+            //note in a large system would have the Firstname, last name and email address hash to a code and save in hashtable
+            //which is much quicker than what i did here, but for a small system looping through all th guest to get the 
+            // current guest is ok.
+
+            Console.WriteLine("Please Enter your First Name");
+            fname = Console.ReadLine();
+
+            Console.WriteLine("Please Enter your Last Name");
+            lname = Console.ReadLine();
+
+            Console.WriteLine("Please Enter your Email Address"); //note would use the GUI feature to test if vaild email address
+            emailAddress = Console.ReadLine();
+
+            Guest currentGuest = null;
+            foreach (Guest guest in guests)
+            {
+                if (guest.FirstName.ToLower().Equals(fname.ToLower()))
+                {
+                    if (guest.LastName.ToLower().Equals(lname.ToLower()))
+                    {
+                        if(guest.EmailAddress.ToLower().Equals(emailAddress.ToLower()))
+                        {
+                            currentGuest = guest;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!createGuestIfNotInSystem)
+                return currentGuest;
+
+            if (currentGuest == null)
+            {                
+                currentGuest = new Guest(guests.Count + 1, fname, lname, emailAddress);
+                guests.Add(currentGuest);
+            }
+            return currentGuest;
+        }
+
+
+        private void DisplayAvailableRooms(List<Room> availableRooms)
+        {
+            Console.WriteLine("\nAvailable room are listed below:");
+            foreach (Room room in availableRooms)
+            {
+                Console.WriteLine("Room ID: {0}   Number of Beds {1}   Price Per Night ${2}", room.RoomID, room.NumberOfBeds, room.RoomPrice);
+            }
+        }
+        
+        
+        public void CancelReservation()
+        {
+            if (reservations.Count == 0)
+            {
+                Console.WriteLine("\nNo reservations available to be canceled");
+                return;
+            }
+            Guest currentGuest = GetCurrentGuest(false);
+            if (currentGuest == null)
+            {
+                Console.WriteLine("\nNo reservations for selected user");
+                return;
+            }
+
+            DisplayGuestReservations(currentGuest);
+           
+            int reservationID;            
+            bool vaildReservationID = false;
+            Reservation canceledReservation = null;
+            
+            while (!vaildReservationID)
+            {
+                Console.WriteLine("\nPlease enter a valid reservation ID number you wish to cancel");
+                Int32.TryParse(Console.ReadLine(), out reservationID);
+
+                foreach (Reservation reservation in reservations)
+                {
+                    if (reservation.ReservationID == reservationID)
+                    {
+                        canceledReservation = reservation;
+                        reservations.Remove(reservation);
+                        vaildReservationID = true;
+                        break;
+                    }
+                }                
+            }
+
+            if (emailService != null && canceledReservation != null)
+                emailService.SendEmail(true, canceledReservation);
+            Console.WriteLine("\nCongratulation {0}, your reservation has been successfully canceled", currentGuest.FirstName);
+            
+        }
+
+
+        private void DisplayGuestReservations(Guest currentGuest)
+        {
+            Console.WriteLine("\nReservations for {0} are listed below", currentGuest.FirstName);
+            foreach (Reservation reservation in reservations)
+            {
+                if (reservation.Guest == currentGuest)
+                    reservation.Print();
+            }
+        }
+        
+
+        private List<Room> AvailableRooms(int numberOfBeds, DateTime checkInDate, DateTime checkOutDate)
+        {
+            List<Room> availableRoomList = new List<Room>();
+            foreach (var room in rooms)
+            {
+                if (room.NumberOfBeds == numberOfBeds)
+                    availableRoomList.Add(room);
+            }
+
+            foreach (var reservation in reservations)
+            {
+                //check if any of the available rooms are already scheduled during that time period
+                if (DateTime.Compare(reservation.CheckInDate, checkOutDate) <= 0 && DateTime.Compare(reservation.CheckInDate, checkInDate) >= 0
+                     ||
+                    DateTime.Compare(reservation.CheckOutDate, checkOutDate) <= 0 && DateTime.Compare(reservation.CheckOutDate, checkInDate) >= 0)
+                {
+                    if (availableRoomList.Contains(reservation.Room))
+                        availableRoomList.Remove(reservation.Room);
+                }
+            }
+            return availableRoomList;
+        }
+
+
+        public void ViewAllReservations()
+        {
+            if (reservations.Count == 0)
+            {
+                Console.WriteLine("\nNo Reservation created yet");
+                return;
+            }
+
+            Console.WriteLine("\nAll Current Reservations are Listed Below");
+
+            foreach (Reservation reservation in reservations)
+            {
+                reservation.Print();
+            }
+        }
+
+
+        public void ViewMyReservation()
+        {
+            if (reservations.Count == 0)
+            {
+                Console.WriteLine("\nNo reservations available");
+                return;
+            }
+            Guest currentGuest = GetCurrentGuest(false);
+            if (currentGuest == null)
+            {
+                Console.WriteLine("No reservations for selected user");
+                return;
+            }
+
+            DisplayGuestReservations(currentGuest);
+        }
+    }
+}
