@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace HotelReservationSystem
+{
+    public class Reservation
+    {
+        private Guest guest;
+        private Room room;
+        private DateTime checkInDate;
+        private DateTime checkOutDate;
+        private int reservationID;
+
+        public Reservation(int reservationID, Guest guest, Room room, DateTime checkInDate, DateTime checkOutDate)
+        {
+            this.guest = guest;
+            this.room = room;
+            this.checkInDate = checkInDate;
+            this.checkOutDate = checkOutDate;
+            this.reservationID = reservationID;
+        }
+
+        public int ReservationID { get { return this.reservationID; } }
+        public int GuestID { get { return this.guest.GuestID; } }
+        public Guest Guest { get { return this.guest; } }
+        public int RoomID { get { return this.room.RoomID; } }
+        public Room Room { get { return this.room; } }
+        public DateTime CheckInDate { get { return this.checkInDate; } }
+        public DateTime CheckOutDate { get { return this.checkOutDate; } }
+        
+        public void Print()
+        {
+            Console.WriteLine("\nGuest Name: {0} {1}, Reservation ID: {2}, Room ID: {3}, Number of Beds: {4}, Check in Date: {5}, Check out Date: {6}, Price per night: ${7}",
+                    Guest.FirstName, Guest.LastName, ReservationID, Room.RoomID, Room.NumberOfBeds, CheckInDate.ToShortDateString(), CheckOutDate.ToShortDateString(), Room.RoomPrice);            
+        } 
+    }
+
+}
