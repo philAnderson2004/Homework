@@ -1,0 +1,29 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace HotelReservationSystem
+{
+    public class Room
+    {
+        private int numberOfBeds;
+        private bool cleaned;
+        private int roomID;
+        private double roomPrice;
+
+        public Room(int roomID, int numberOfBeds, double roomPrice)
+        {
+            this.roomID = roomID;
+            this.numberOfBeds = numberOfBeds;
+            this.roomPrice = roomPrice;
+            this.cleaned = true;
+        }
+
+        public int RoomID { get { return this.roomID; } }
+        public int NumberOfBeds { get { return this.numberOfBeds; } }
+        public double RoomPrice { get { return this.roomPrice; } }
+        public int Cleaned { set { } }
+        public string Status() { return cleaned ? "Clean" : "Dirty"; }
+    }
+}
