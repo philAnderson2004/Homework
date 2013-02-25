@@ -1,0 +1,62 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace HotelReservationSystem
+{
+    class Program
+    {       
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Welcome options are listed below");
+            int choice = int.MaxValue;
+            bool trySendInSendGridEmail = false;
+            trySendInSendGridEmail = true;
+
+            HotelReservation hotelReservation = new HotelReservation(trySendInSendGridEmail);
+
+            while (choice != 0)
+            {
+                switch (choice)
+                {           
+                    case 1:
+                        hotelReservation.MakeReservation();
+                        break;
+
+                    case 2:
+                        hotelReservation.ViewMyReservation();
+                        break;
+
+                    case 3:
+                        hotelReservation.ViewAllReservations();
+                        break;
+
+                    case 4:
+                        hotelReservation.CancelReservation();
+                        break;
+
+                    default:
+                        Console.WriteLine("Please enter a vaild choice");
+                        break;
+                }
+
+                DisplayOptions();
+                Int32.TryParse(Console.ReadLine(), out choice);
+            }
+
+            Console.WriteLine("\nGood bye, press any key to exit the program.");           
+            Console.ReadLine();
+        }
+
+
+        private static void DisplayOptions()
+        {
+            Console.WriteLine("\n\nEnter 1 to make a new reservation.");
+            Console.WriteLine("Enter 2 to view my reservations.");
+            Console.WriteLine("Enter 3 to view all reservations.");
+            Console.WriteLine("Enter 4 to cancel a reservation.");
+            Console.WriteLine("Enter 0 to exit the system.");
+        }           
+    }
+}
