@@ -1,0 +1,30 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace HotelReservationSystem
+{
+    public class Guest
+    {
+        private int guestID;               
+        private string firstName;
+        private string lastName;
+        private string emailAddress;
+
+        public Guest(int guestID, string fName, string lName, string emailAddress)
+        {
+            this.guestID = guestID;
+            this.firstName = fName;
+            this.lastName = lName;
+            this.emailAddress = emailAddress;
+        }
+
+        public int GuestID { get { return this.guestID; } }
+        public string FirstName { get { return this.firstName; } }
+        public string LastName { get { return this.lastName; } }
+        public string EmailAddress { get { return this.emailAddress; } }
+
+    }
+
+}
