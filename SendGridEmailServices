@@ -1,0 +1,88 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Net.Mail;
+using System.Net;
+
+namespace HotelReservationSystem
+{
+    class SendGridEmailServices
+    {
+        SmtpClient smtpClient;
+        private string hotelEmailAddress   = "SomeEmailAdress@yahoo.com";
+        private string sendGridSMTP_Server = "smtp.sendgrid.net";
+        private string sendGridUserName;
+        private string sendGridPassword;
+
+        public SendGridEmailServices()
+        {           
+            Console.WriteLine("Please Enter your SendGrid UserName");
+            sendGridUserName = Console.ReadLine();
+
+            Console.WriteLine("Please Enter your SendGrid Password");
+            sendGridPassword = Console.ReadLine();//GetPassword();
+                       
+            smtpClient = new SmtpClient();
+            NetworkCredential basicCredential = new NetworkCredential(sendGridUserName, sendGridPassword);
+            smtpClient.Host = sendGridSMTP_Server;
+            smtpClient.UseDefaultCredentials = false;
+            smtpClient.Credentials = basicCredential;
+            smtpClient.Port = 587;    
+        }
+
+
+        public void SendEmail(bool newReservation, Reservation reservation)
+        {
+            MailMessage message = new MailMessage();                             
+            message.To.Add(reservation.Guest.EmailAddress);
+            message.Subject = "Reservation Info";
+            message.From = new System.Net.Mail.MailAddress(hotelEmailAddress);
+
+            message.Body =  newReservation ? "Your new reservation is: " : "Your canceleation is: ";
+            message.Body += String.Format("\nGuest Name: {0} {1}, Reservation ID: {2}, Room ID: {3}, Number of Beds: {4}, Check in Date: {5}, Check out Date: {6}, Price per night: ${7}",
+                    reservation.Guest.FirstName, reservation.Guest.LastName, reservation.ReservationID, reservation.Room.RoomID, reservation.Room.NumberOfBeds, reservation.CheckInDate.ToShortDateString(), reservation.CheckOutDate.ToShortDateString(), reservation.Room.RoomPrice);            
+           try
+            {
+                Console.WriteLine("\nTrying to send Email");
+                smtpClient.Send(message);
+                Console.WriteLine("\nEmail sent to {0}", reservation.Guest.EmailAddress);
+            }
+            catch (Exception e)
+            {
+                //Error, could not send the message
+                Console.WriteLine("Error in sending Email");
+            }
+           
+        }
+        
+
+        public string GetPassword()
+        {
+            string password = "";
+            ConsoleKeyInfo info = Console.ReadKey(true);
+            while (info.Key != ConsoleKey.Enter)
+            {
+                if (info.Key != ConsoleKey.Backspace)
+                {
+                    password += info.KeyChar;
+                    info = Console.ReadKey(true);
+                }
+                else if (info.Key == ConsoleKey.Backspace)
+                {
+                    if (!string.IsNullOrEmpty(password))
+                    {
+                        password = password.Substring
+                        (0, password.Length - 1);
+                    }
+                    info = Console.ReadKey(true);
+               }
+            }
+            for (int i = 0; i < password.Length; i++)
+                Console.Write("*");
+            Console.WriteLine("\n");
+            return password;            
+        }
+
+    }
+}
